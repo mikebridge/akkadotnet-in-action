@@ -15,12 +15,8 @@ namespace WebApp.Controllers
     [RoutePrefix("events")]
     public class EventsController : ApiController
     {
-        
-        //public IEnumerable<string> Get()
-        //{            
-            //return new string[] { "value1", "value2" };
-        //}
-        /// https://github.com/akkadotnet/akka.net/issues/804
+        // TODO: figure out error handling
+
         [Route("")]
         public async Task<IHttpActionResult> Get()
         {
@@ -32,6 +28,7 @@ namespace WebApp.Controllers
         public async Task<IHttpActionResult> Get(String name)
         {
             var result = await SystemActors.BoxOfficeActor.Ask<Object>(new BoxOffice.GetEvent(name));
+            // TODO: implement the 404
             return Ok(result);
         }
 
@@ -42,14 +39,12 @@ namespace WebApp.Controllers
             return Ok(result);
         }
 
-        // PUT api/events/5
-        public void Put(int id, [FromBody]string value)
+        [Route("{name}")]
+        public async Task<IHttpActionResult> Delete(String name)
         {
-        }
-
-        // DELETE api/events/5
-        public void Delete(int id)
-        {
+            var result = await SystemActors.BoxOfficeActor.Ask<Object>(new BoxOffice.CancelEvent(name));
+            // TODO: Interpret the "null" result.
+            return Ok(result);
         }
     }
 

@@ -25,14 +25,14 @@ namespace WebApp
             
             // see: https://github.com/petabridge/akkadotnet-code-samples/blob/master/Cluster.WebCrawler/README.md
             // also: http://stackoverflow.com/questions/27634843/akka-net-actor-system-in-asp-net
-            ActorSystem = ActorSystem.Create("upandrunning");
+            ActorSystem = ActorSystem.Create("goticks");
             //var router = ActorSystem.ActorOf(Props.Create(() => new RemoteJobActor()).WithRouter(FromConfig.Instance), "tasker");
             //SystemActors.CommandProcessor = ActorSystem.ActorOf(Props.Create(() => new CommandProcessor(router)),
             //    "commands");
             //SystemActors.SignalRActor = ActorSystem.ActorOf(Props.Create(() => new SignalRActor()), "signalr");
 
-            // TODO: There should be a better way to do this.
-            SystemActors.BoxOfficeActor = ActorSystem.ActorOf(Props.Create(() => new BoxOffice()), "boxoffice");
+            // TODO: In the example, the RestApi is an actor too.
+            SystemActors.BoxOfficeActor = ActorSystem.ActorOf(Props.Create(() => new BoxOffice()), "box-office");
         }
     }
 }

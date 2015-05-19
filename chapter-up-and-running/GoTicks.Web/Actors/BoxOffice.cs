@@ -12,8 +12,6 @@ namespace WebApp.Actors
             Initialize();
         }
 
-        #region Message types
-
         public class @Event
         {
             public String Name { get; private set; }
@@ -26,6 +24,8 @@ namespace WebApp.Actors
             }
 
         }
+
+        #region Message types
 
         public class CreateEvent
         {
@@ -59,6 +59,16 @@ namespace WebApp.Actors
 
         public class EventCreated
         {
+        }
+
+        public class CancelEvent
+        {
+            public string Name { get; private set; }
+
+            public CancelEvent(String name)
+            {
+                Name = name;
+            }
         }
 
         #endregion
@@ -117,6 +127,24 @@ namespace WebApp.Actors
 //      context.child(name).fold(create())(_ => sender() ! EventExists) //<co id="ch02_create_or_respond_with_exists"/>
 //            });
             });
+
+            Receive<CancelEvent>(message =>
+            {
+                Console.WriteLine("Cancel event " + message.Name);
+                var actorRef = Context.Child(message.Name);
+                if (actorRef.IsNobody())
+                {
+                    // TODO: Should this return null?
+                    Context.Sender.Tell(null);
+                }
+                else
+                {
+                    actorRef.Forward(new TicketSeller.Cancel());
+                }
+                // def notFound() = sender() ! None
+                // def cancelEvent(child: ActorRef) = child forward TicketSeller.Cancel
+                // context.child(event).fold(notFound())(cancelEvent)
+            });
         }
 
         public IActorRef CreateTicketSeller(String name)
@@ -126,9 +154,6 @@ namespace WebApp.Actors
             // def createTicketSeller(name:String) =
             // context.actorOf(TicketSeller.props(name), name) //<co id="ch02_create_ticket_seller"/>
         }
-          
-
-
     }
 
 }

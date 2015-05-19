@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Akka.Actor;
 
 namespace WebApp.Actors
@@ -39,6 +38,11 @@ namespace WebApp.Actors
             }
         }
 
+        public class Cancel
+        {
+            
+        }
+
         public class GetEvent
         {
         }
@@ -59,6 +63,12 @@ namespace WebApp.Actors
                 // TODO: "some"
                 Context.Sender.Tell(new BoxOffice.Event(_event, _tickets.Count)));
 
+            Receive<Cancel>(message =>
+            {
+                // TODO: Some?
+                Context.Sender.Tell(new BoxOffice.Event(_event, _tickets.Count));
+                Self.Tell(PoisonPill.Instance);
+            });
 
 //            Receive<Buy>(message =>
 //            {
