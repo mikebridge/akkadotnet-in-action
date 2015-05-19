@@ -31,8 +31,9 @@ namespace WebApp
             //    "commands");
             //SystemActors.SignalRActor = ActorSystem.ActorOf(Props.Create(() => new SignalRActor()), "signalr");
 
-            // TODO: In the example, the RestApi is an actor too.
+            // TODO: In the example, the RestApi is the toplevel actor
             SystemActors.BoxOfficeActor = ActorSystem.ActorOf(Props.Create(() => new BoxOffice()), "box-office");
+
         }
     }
 }
