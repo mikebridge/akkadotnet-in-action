@@ -3,38 +3,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
+using Akka.Actor;
+using WebApp.Actors;
 
 namespace WebApp.Controllers
 {
     [RoutePrefix("events/{event}/tickets")]
     public class TicketsController : ApiController
     {
-        // GET: api/Tickets
-        public IEnumerable<string> Get()
+        [Route("")]
+        public async Task<IHttpActionResult> Post(String @event, TicketRequest ticketRequest)
         {
-            return new string[] { "value1", "value2" };
+            var result = await SystemActors.BoxOfficeActor.Ask<TicketSeller.Tickets>(new BoxOffice.GetTickets(@event, ticketRequest.Tickets));
+
+            if (result.Entries.Count == 0)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Created(Request.RequestUri, result);
+            }
+            
         }
 
-        // GET: api/Tickets/5
-        public string Get(int id)
-        {
-            return "value";
-        }
 
-        // POST: api/Tickets
-        public void Post([FromBody]string value)
+        public class TicketRequest 
         {
-        }
-
-        // PUT: api/Tickets/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE: api/Tickets/5
-        public void Delete(int id)
-        {
+            public int Tickets { get; set; }
         }
     }
 }

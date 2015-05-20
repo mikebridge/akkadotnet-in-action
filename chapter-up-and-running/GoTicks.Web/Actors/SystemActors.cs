@@ -7,7 +7,7 @@ using Akka.Actor;
 namespace WebApp.Actors
 {
     /// <summary>
-    /// Todo: this doesn't seem right.
+    /// TODO: See if there's a better way to do this....
     /// </summary>
     public class SystemActors {
     

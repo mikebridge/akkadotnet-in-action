@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+
 using Akka.Actor;
 
 namespace WebApp.Actors
@@ -11,20 +11,6 @@ namespace WebApp.Actors
         {
             Initialize();
         }
-
-        public class @Event
-        {
-            public String Name { get; private set; }
-            public int Tickets { get; private set; }
-
-            public @Event(String name, int tickets)
-            {
-                Name = name;
-                Tickets = tickets;
-            }
-
-        }
-
         #region Message types
 
         public class CreateEvent
@@ -39,25 +25,40 @@ namespace WebApp.Actors
             }
         }
 
-        public class GetEvents
-        {
-
-        }
-
         public class GetEvent
         {
             public GetEvent(String name)
             {
                 Name = name;
             }
+
             public String Name { get; private set; }
         }
 
-        public class EventExists
-        {            
+        public class GetEvents {}
+
+        public class @Event
+        {
+            public String Name { get; private set; }
+            public int Tickets { get; private set; }
+
+            public @Event(String name, int tickets)
+            {
+                Name = name;
+                Tickets = tickets;
+            }
+
         }
 
-        public class EventCreated
+        public interface IEventResponse
+        {
+        }
+
+        public class EventExists : IEventResponse
+        {
+        }
+
+        public class EventCreated : IEventResponse
         {
         }
 
@@ -71,29 +72,23 @@ namespace WebApp.Actors
             }
         }
 
+        public class GetTickets
+        {
+            public string Name { get; private set; }
+            public int Tickets { get; private set; }
+
+            public GetTickets(String name, int tickets)
+            {
+                Name = name;
+                Tickets = tickets;
+            }
+        }
+
+
         #endregion
 
         public void Initialize()
         {
-            Receive<GetEvents>(_ =>
-            {
-                var evts = Context.GetChildren()
-                    .Select(child => child.Ask<Object>(new TicketSeller.GetEvent()).Result);
-  
-                Context.Sender.Tell(evts);
-                
-            });
-
-            Receive<GetEvent>(message =>
-            {
-                // TODO: IMplement this.
-                Context.Sender.Tell("Test");
-                //Context.Child(evt.Name)
-                //def notFound() = sender() ! None
-                //def getEvent(child: ActorRef) = child forward TicketSeller.GetEvent
-                //context.child(event).fold(notFound())(getEvent)
-            });
-
             Receive<CreateEvent>(message =>
             {
                 //var childen = Context.GetChildren();
@@ -106,31 +101,57 @@ namespace WebApp.Actors
                     Context.Sender.Tell(new EventExists());
                     return;
                 }
-                
+
                 // create ticket objects
                 var newTickets = Enumerable.Range(1, 10).Select(ticketId => new TicketSeller.Ticket(ticketId)).ToList();
-                
 
                 // Tell the ticket seller about the new tickets
                 ticketSeller.Tell(new TicketSeller.Add(newTickets));
-                
+
                 // Tell the sender that the event was created successfully
                 Context.Sender.Tell(new EventCreated());
-// def create() = {  //<co id="ch02_create"/>
-//        val eventTickets = createTicketSeller(name)
-//        val newTickets = (1 to tickets).map { ticketId =>
-//          TicketSeller.Ticket(ticketId)
-//        }.toVector
-//        eventTickets ! TicketSeller.Add(newTickets)
-//        sender() ! EventCreated
-//      }
-//      context.child(name).fold(create())(_ => sender() ! EventExists) //<co id="ch02_create_or_respond_with_exists"/>
-//            });
+
             });
+
+            Receive<GetEvent>(message =>
+            {
+                var childRef = Context.Child(message.Name);
+                if (childRef.IsNobody())
+                {
+                    Sender.Tell(null); // should this be a EventNotFound message?
+                }
+                else
+                {
+                    
+                    childRef.Forward(new TicketSeller.GetEvent());
+                }
+            });
+
+            Receive<GetEvents>(_ =>
+            {
+                var evts = Context.GetChildren()
+                    .Select(child => child.Ask<Object>(new TicketSeller.GetEvent()).Result);
+                Context.Sender.Tell(evts);
+
+            });
+
+            Receive<GetTickets>(message =>
+            {
+                var childRef = Context.Child(message.Name);
+                if (childRef.IsNobody())
+                {
+                    Context.Sender.Tell(new TicketSeller.Tickets(message.Name));
+                }
+                else
+                {
+                    childRef.Forward(new TicketSeller.Buy(message.Tickets));
+                }
+
+            });
+
 
             Receive<CancelEvent>(message =>
             {
-                Console.WriteLine("Cancel event " + message.Name);
                 var actorRef = Context.Child(message.Name);
                 if (actorRef.IsNobody())
                 {
@@ -141,19 +162,14 @@ namespace WebApp.Actors
                 {
                     actorRef.Forward(new TicketSeller.Cancel());
                 }
-                // def notFound() = sender() ! None
-                // def cancelEvent(child: ActorRef) = child forward TicketSeller.Cancel
-                // context.child(event).fold(notFound())(cancelEvent)
             });
         }
 
         public IActorRef CreateTicketSeller(String name)
         {
             return Context.ActorOf(Props.Create(() => new TicketSeller(name)), name);
-            //Context.ActorOf<TicketSeller>(Props.Create(() => new TicketSeller()), "TicketSeller");
-            // def createTicketSeller(name:String) =
-            // context.actorOf(TicketSeller.props(name), name) //<co id="ch02_create_ticket_seller"/>
         }
-    }
 
+
+    }
 }

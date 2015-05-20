@@ -15,8 +15,6 @@ namespace WebApp.Controllers
     [RoutePrefix("events")]
     public class EventsController : ApiController
     {
-        // TODO: figure out error handling
-
         [Route("")]
         public async Task<IHttpActionResult> Get()
         {
@@ -27,24 +25,36 @@ namespace WebApp.Controllers
         [Route("{name}")]
         public async Task<IHttpActionResult> Get(String name)
         {
-            var result = await SystemActors.BoxOfficeActor.Ask<Object>(new BoxOffice.GetEvent(name));
-            // TODO: implement the 404
-            return Ok(result);
+            var result = await SystemActors.BoxOfficeActor.Ask<BoxOffice.Event>(new BoxOffice.GetEvent(name));
+            if (result == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(result);
+            }
         }
 
         [Route("")]
         public async Task<IHttpActionResult> Post(NewEvent newEvent)
         {
-            var result = await SystemActors.BoxOfficeActor.Ask<Object>(new BoxOffice.CreateEvent(newEvent.Name, newEvent.Tickets));
-            return Ok(result);
+            var result = await SystemActors.BoxOfficeActor.Ask<BoxOffice.IEventResponse>(new BoxOffice.CreateEvent(newEvent.Name, newEvent.Tickets));
+            if (result is BoxOffice.EventExists)
+            {
+                return BadRequest(newEvent.Name + " event exists already.");
+            }
+            else
+            {
+                return Created(Request.RequestUri + newEvent.Name, "Created");
+            }
         }
 
         [Route("{name}")]
         public async Task<IHttpActionResult> Delete(String name)
         {
-            var result = await SystemActors.BoxOfficeActor.Ask<Object>(new BoxOffice.CancelEvent(name));
-            // TODO: Interpret the "null" result.
-            return Ok(result);
+            await SystemActors.BoxOfficeActor.Ask<Object>(new BoxOffice.CancelEvent(name));
+            return Ok();
         }
     }
 

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Akka.Actor;
 
 namespace WebApp.Actors
@@ -8,25 +10,15 @@ namespace WebApp.Actors
     {
         private readonly string _event;
 
+        public List<Ticket> _tickets = new List<Ticket>();
+
         public TicketSeller(String @event)
         {
             _event = @event;
             Initialize();
         }
 
-        public readonly List<Ticket> _tickets = new List<Ticket>();
-
         #region Messages
-
-        public class Ticket
-        {
-            public int Id { get; private set; }
-
-            public Ticket(int id)
-            {
-                Id = id;
-            }
-        }
 
         public class Add
         {
@@ -38,14 +30,42 @@ namespace WebApp.Actors
             }
         }
 
-        public class Cancel
+        public class Buy
         {
-            
+            public int NrOfTickets { get; private set; }
+
+            public Buy(int nrOfTickets)
+            {
+                NrOfTickets = nrOfTickets;
+            }
         }
 
-        public class GetEvent
+        public class Ticket
         {
+            public int Id { get; private set; }
+
+            public Ticket(int id)
+            {
+                Id = id;
+            }
         }
+
+        public class Tickets
+        {
+            public string Event { get; private set; }
+
+            public IList<Ticket> Entries { get; private set; }
+
+            public Tickets(String @event, IList<Ticket> entries = null)
+            {
+                Event = @event;
+                Entries = entries ?? new List<Ticket>();
+            }
+        }
+
+        public class Cancel {}
+
+        public class GetEvent {}
 
         #endregion
 
@@ -54,28 +74,32 @@ namespace WebApp.Actors
         {
             Receive<Add>(message =>
             {
-                _tickets.AddRange(message.NewTickets);
-                
+                _tickets.AddRange(message.NewTickets);                
             });
 
+            Receive<Buy>(message =>
+            {
+                var entries = _tickets.Take(message.NrOfTickets).ToList();
+
+                if (entries.Count >= message.NrOfTickets)
+                {
+                    Context.Sender.Tell(new Tickets(_event, entries));
+                    _tickets = _tickets.Skip(message.NrOfTickets).ToList();
+                }
+                else
+                {
+                    Context.Sender.Tell(new Tickets(_event));
+                }
+            });
 
             Receive<GetEvent>(message =>
-                // TODO: "some"
                 Context.Sender.Tell(new BoxOffice.Event(_event, _tickets.Count)));
 
             Receive<Cancel>(message =>
             {
-                // TODO: Some?
-                Context.Sender.Tell(new BoxOffice.Event(_event, _tickets.Count));
+                Context.Sender.Tell(new BoxOffice.Event(_event, _tickets.Count));                
                 Self.Tell(PoisonPill.Instance);
             });
-
-//            Receive<Buy>(message =>
-//            {
-//                Console.WriteLine("TODO: Add Buy");
-//            });
-
-
 
         }
 
