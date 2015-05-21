@@ -60,7 +60,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestDriven\EchoActorTest.cs" />
     <Compile Include="TestDriven\FilteringActorTest.cs" />
+    <Compile Include="TestDriven\Greeter02Test.cs" />
     <Compile Include="TestDriven\Greeter01Test.cs" />
+    <Compile Include="TestDriven\SendingActor01Test.cs" />
+    <Compile Include="TestDriven\SilentActorNextTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
